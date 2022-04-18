@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.yx.dao.RenewMapper" >
+    <resultMap id="baseMap" type="com.yx.po.Renew">
+        <id property="id" column="id"></id>
+        <result property="renewDays" column="renew_days"></result>
+        <result property="remarks" column="remarks"></result>
+        <result property="status" column="status"></result>
+        <association property="lendList" javaType="com.yx.po.LendList">
+            <id property="id" column="lid"></id>
+            <result property="lendDate" column="lendDate"></result>
+            <result property="dueDate" column="dueDate"></result>
+        </association>
+        <!--图书信息,需要得到图书名-->
+        <association property="bookInfo" javaType="com.yx.po.BookInfo">
+            <id property="id" column="book_id"></id>
+            <result property="name" column="name"></result>
+        </association>
+
+        <!--读者信息，需要得到读者卡号和真实姓名-->
+        <association property="readerInfo" javaType="com.yx.po.ReaderInfo">
+            <id property="id" column="reader_id"></id>
+            <result property="realName" column="realName"></result>
+            <result property="readerNumber" column="readerNumber"></result>
+        </association>
+    </resultMap>
+   <insert id="insertRenew" parameterType="com.yx.po.Renew">
+       insert into renew(lid,renew_days,remarks,book_id,reader_id) values (#{lendList.id},#{renewDays},#{remarks},#{bookInfo.id},#{readerInfo.id});
+   </insert>
+    <select id="selectAllRenew" resultMap="baseMap">
+        select renew.*,lendDate,dueDate,name,realName,readerNumber
+        from renew left join lend_list on renew.lid = lend_list.id
+        left join book_info on renew.book_id = book_info.id
+        left join reader_info on renew.reader_id = reader_info.id
+        where renew.status = 0
+        <if test="bookName != null and bookName != ''">
+            and book_info.name like '%${bookName}%'
+        </if>
+        <if test="readerNumber != null and readerNumber != ''">
+            and reader_info.readerNumber = #{readerNumber}
+        </if>
+    </select>
+
+    <update id="updateRenewStatusById" parameterType="com.yx.po.Renew">
+        update renew set status = #{status} where id = #{id}
+    </update>
+
+</mapper>
